@@ -39,16 +39,18 @@ public class OrderingService {
         Ordering savedOrder = orderingRepository.save(ordering);
 
         List<CreateOrderDetailRequest> orderDetailList = createOrderRequest.getOrderDetailList();
-        List<OrderDetail> orderDetails = new ArrayList<>();
+//        List<OrderDetail> orderDetails = new ArrayList<>();
 
         for (CreateOrderDetailRequest createOrderDetailRequest : orderDetailList) {
             Product product = productRepository.findByIdOrThrow(createOrderDetailRequest.getProductId());
             OrderDetail orderDetail = CreateOrderDetailRequest.toEntity(createOrderDetailRequest, product, savedOrder);
-            orderDetails.add(orderDetail);
+//            orderDetails.add(orderDetail);
 //            orderDetailRepository.save(orderDetail); // 이거 안해줘도 되네. PERSIST 되나보다
+
+            ordering.getOrderDetails().add(orderDetail);
         }
 
-        savedOrder.updateDetails(orderDetails);
+//        savedOrder.updateDetails(orderDetails);
         return CreateOrderResponse.fromEntity(savedOrder);
     }
 

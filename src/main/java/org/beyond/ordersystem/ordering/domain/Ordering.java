@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import org.beyond.ordersystem.member.domain.Member;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -26,8 +27,9 @@ public class Ordering {
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
 
+    @Builder.Default // 빌더 패턴쓰면 초기화가 안먹어서 붙여주는것
     @OneToMany(mappedBy = "ordering", cascade = CascadeType.PERSIST)
-    private List<OrderDetail> orderDetails;
+    private List<OrderDetail> orderDetails = new ArrayList<>();
 
     public void updateDetails(List<OrderDetail> orderDetails) {
         this.orderDetails = orderDetails;
