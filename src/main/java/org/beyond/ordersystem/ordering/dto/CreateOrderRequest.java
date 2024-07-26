@@ -24,7 +24,7 @@ public class CreateOrderRequest {
     public static Ordering toEntity(CreateOrderRequest createOrderResponse, Member member) {
         return Ordering.builder()
                 .member(member)
-                .orderStatus(ORDERED)
+//                .orderStatus(ORDERED) // @Builder.Default로 대체
                 .build();
     }
 }

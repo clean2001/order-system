@@ -43,11 +43,11 @@ public class CreateMemberRequest {
         return Member.builder()
                 .name(createMemberRequest.getName())
                 .email(createMemberRequest.getEmail())
-//                .password(encodedPassword)
-                .password(createMemberRequest.getPassword())
+                .password(encodedPassword)
+//                .password(createMemberRequest.getPassword())
                 .address(createMemberRequest.getAddress())
 //                .role(createMemberRequest.getRole())
-                .role(USER)
+//                .role(USER) // @Builder.Default로 대체
                 .build();
     }
 }

@@ -11,17 +11,17 @@ import org.beyond.ordersystem.ordering.domain.OrderDetail;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateOrderDetailResponse {
-    private Long orderDetailId;
+    private Long id;
     private Long productId;
     private String productName;
-    private Integer quantity;
+    private Integer count;
 
     public static CreateOrderDetailResponse fromEntity(OrderDetail orderDetail) {
         return CreateOrderDetailResponse.builder()
-                .orderDetailId(orderDetail.getId())
+                .id(orderDetail.getId())
                 .productId(orderDetail.getProduct().getId())
                 .productName(orderDetail.getProduct().getName())
-                .quantity(orderDetail.getQuantity())
+                .count(orderDetail.getQuantity())
                 .build();
     }
 }

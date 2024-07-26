@@ -21,12 +21,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-@Transactional(propagation = Propagation.REQUIRES_NEW) // 전파레벨 새로운 트랜잭션 생성하도록 바꿈
+//@Transactional(propagation = Propagation.REQUIRES_NEW) // 전파레벨 새로운 트랜잭션 생성하도록 바꿈
 @RequiredArgsConstructor
 @Service
 public class OrderingService {
@@ -36,9 +37,10 @@ public class OrderingService {
     private final ProductRepository productRepository;
     private final OrderDetailRepository orderDetailRepository;
 
+    private final EntityManager em; // em DI 받기
     // 방법 1. 쉬운 방식
-//    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public CreateOrderResponse createOrder2(CreateOrderRequest dto) {
+    @Transactional
+    public CreateOrderResponse createOrder1(CreateOrderRequest dto) {
         Member member = memberRepository.findById(dto.getMemberId()).orElseThrow(()->new EntityNotFoundException("없음"));
         Ordering ordering = orderingRepository.save(CreateOrderRequest.toEntity(dto, member));
 
@@ -46,10 +48,13 @@ public class OrderingService {
         for(CreateOrderDetailRequest orderDto : dto.getOrderDetailList()){
             createOrderDetailItem(orderDto, ordering); // 따로 트랜잭션으로 저장하기
         }
-        return CreateOrderResponse.fromEntity(ordering);
+
+        em.clear(); // 강제 클리어 => 쿼리 나감
+        Ordering findOrdering = orderingRepository.findByIdOrThrow(ordering.getId());
+        return CreateOrderResponse.fromEntity(findOrdering);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void createOrderDetailItem(CreateOrderDetailRequest orderDto, Ordering ordering) {
         Product product = productRepository.findById(orderDto.getProductId()).orElse(null);
         int quantity = orderDto.getQuantity();
@@ -60,26 +65,40 @@ public class OrderingService {
                 .build();
 
         orderDetailRepository.save(orderDetail);
+
     }
 
+    // 내가 차감하고자 하는 개수보다 재고가 작으면 예외 던지기
+    // 정상적으로 차감 가능하면 재고감소 업데이트
+
     // 방법 2. JPA 최적화된 방식
+    @Transactional
     public CreateOrderResponse createOrder(CreateOrderRequest createOrderRequest) {
 
         // 주문한 회원
         Member member = memberRepository.findByIdOrThrow(createOrderRequest.getMemberId());
         Ordering ordering = CreateOrderRequest.toEntity(createOrderRequest, member);
 
+//        log.info("둘은 같은가? {}", savedOrder == ordering); // 같네
+
         List<CreateOrderDetailRequest> orderDetailList = createOrderRequest.getOrderDetailList();;
 
         for (CreateOrderDetailRequest createOrderDetailRequest : orderDetailList) {
             Product product = productRepository.findByIdOrThrow(createOrderDetailRequest.getProductId());
+
+            //== 재고 확인/감소 로직 ==//
+            // 변경감지(=dirty checking)으로 인해 별도의 save 불필요
+            decreaseStock(product, createOrderDetailRequest.getQuantity());
+            //== 재고 확인/감소 로직 끝==//
+
             OrderDetail orderDetail = CreateOrderDetailRequest.toEntity(createOrderDetailRequest, product, ordering);
 //            orderDetailRepository.save(orderDetail); // 이거 안해줘도 되네. cascade PERSIST 되나보다
             ordering.getOrderDetails().add(orderDetail);
         }
 
+        // 마지막에 저장~ => 이렇게 해야 디테일 아이디가 제대로 내려옴 => 이때 detail이 cascade persist가 되나봄
         Ordering savedOrder = orderingRepository.save(ordering);
-
+        // 위에서 저장하면 null로 내려오는 이유가. 쿼리가 안나가서 그럼. 아니 왜 쿼리가 안나가냐
         return CreateOrderResponse.fromEntity(savedOrder);
     }
 
@@ -87,5 +106,13 @@ public class OrderingService {
         Page<Ordering> orderList = orderingRepository.findAll(pageable);
 
         return orderList.map(CreateOrderResponse::fromEntity);
+    }
+
+    private void decreaseStock(Product product, int count) {
+        if(product.getStockQuantity() < count) {
+            throw new IllegalArgumentException("재고가 부족합니다.");
+        }
+
+        product.decreaseStockQuantity(count);
     }
 }

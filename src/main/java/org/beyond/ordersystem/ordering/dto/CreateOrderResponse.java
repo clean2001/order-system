@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.beyond.ordersystem.ordering.domain.OrderStatus;
 import org.beyond.ordersystem.ordering.domain.Ordering;
 
 import java.util.List;
@@ -14,9 +15,11 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateOrderResponse {
-    private Long orderId;
+    private Long id;
+    private String memberEmail;
+    private OrderStatus orderStatus;
     private Long memberId;
-    private List<CreateOrderDetailResponse> orderDetails;
+    private List<CreateOrderDetailResponse> orderDetailDtos;
 
     public static CreateOrderResponse fromEntity(Ordering order) {
         List<CreateOrderDetailResponse> orderDetailResponseList = order.getOrderDetails().stream()
@@ -24,9 +27,11 @@ public class CreateOrderResponse {
                 .collect(Collectors.toList());
 
         return CreateOrderResponse.builder()
-                .orderId(order.getId())
+                .id(order.getId())
+                .memberEmail(order.getMember().getEmail())
                 .memberId(order.getMember().getId())
-                .orderDetails(orderDetailResponseList)
+                .orderStatus(order.getOrderStatus())
+                .orderDetailDtos(orderDetailResponseList)
                 .build();
     }
 

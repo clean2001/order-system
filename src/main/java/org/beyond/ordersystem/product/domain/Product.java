@@ -28,4 +28,8 @@ public class Product {
     public void updateImagePath(String imagePath) {
         this.imagePath = imagePath;
     }
+
+    public void decreaseStockQuantity(int count) {
+        this.stockQuantity -= count;
+    }
 }

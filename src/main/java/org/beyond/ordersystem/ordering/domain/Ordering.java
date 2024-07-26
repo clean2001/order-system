@@ -24,8 +24,9 @@ public class Ordering {
     @JoinColumn(name = "member_id")
     private Member member;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
-    private OrderStatus orderStatus;
+    private OrderStatus orderStatus = OrderStatus.ORDERED;
 
     @Builder.Default // 빌더 패턴에서도 ArrayList로 초기화 되도록
     @OneToMany(mappedBy = "ordering", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)

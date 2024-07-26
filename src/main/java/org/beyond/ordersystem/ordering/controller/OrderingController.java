@@ -22,7 +22,7 @@ public class OrderingController {
 
     @GetMapping("/order/create")
     public ResponseEntity<SuccessResponse> createOrder(@RequestBody CreateOrderRequest createOrderRequest) {
-        CreateOrderResponse createOrderResponse = orderingService.createOrder2(createOrderRequest);
+        CreateOrderResponse createOrderResponse = orderingService.createOrder(createOrderRequest);
 
         SuccessResponse response = SuccessResponse.builder()
                 .httpStatus(HttpStatus.CREATED)
@@ -33,6 +33,7 @@ public class OrderingController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    // 관리자 API
     @GetMapping("/order/list")
     public ResponseEntity<SuccessResponse> productList(@PageableDefault(size = 10) Pageable pageable) {
         Page<CreateOrderResponse> orderList = orderingService.orderList(pageable);
