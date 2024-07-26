@@ -27,11 +27,11 @@ public class Ordering {
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
 
-    @Builder.Default // 빌더 패턴쓰면 초기화가 안먹어서 붙여주는것
-    @OneToMany(mappedBy = "ordering", cascade = CascadeType.PERSIST)
+    @Builder.Default // 빌더 패턴에서도 ArrayList로 초기화 되도록
+    @OneToMany(mappedBy = "ordering", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<OrderDetail> orderDetails = new ArrayList<>();
 
     public void updateDetails(List<OrderDetail> orderDetails) {
-        this.orderDetails = orderDetails;
+        this.orderDetails = orderDetails ;
     }
 }

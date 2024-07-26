@@ -22,7 +22,7 @@ public class OrderingController {
 
     @GetMapping("/order/create")
     public ResponseEntity<SuccessResponse> createOrder(@RequestBody CreateOrderRequest createOrderRequest) {
-        CreateOrderResponse createOrderResponse = orderingService.createOrder(createOrderRequest);
+        CreateOrderResponse createOrderResponse = orderingService.createOrder2(createOrderRequest);
 
         SuccessResponse response = SuccessResponse.builder()
                 .httpStatus(HttpStatus.CREATED)
