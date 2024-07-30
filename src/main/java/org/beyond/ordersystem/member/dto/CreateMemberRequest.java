@@ -30,6 +30,7 @@ public class CreateMemberRequest {
 //    private String zipcode;
 //    private Role role;
     private Address address;
+    private Role role = Role.USER; // admin 계정 생성을 위해서 추가함
 
     public static Member toEntity(CreateMemberRequest createMemberRequest,
                                   PasswordEncoder passwordEncoder) {
@@ -46,7 +47,7 @@ public class CreateMemberRequest {
                 .password(encodedPassword)
 //                .password(createMemberRequest.getPassword())
                 .address(createMemberRequest.getAddress())
-//                .role(createMemberRequest.getRole())
+                .role(createMemberRequest.getRole())
 //                .role(USER) // @Builder.Default로 대체
                 .build();
     }

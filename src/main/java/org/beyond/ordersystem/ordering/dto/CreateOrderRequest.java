@@ -18,10 +18,12 @@ import static org.beyond.ordersystem.ordering.domain.OrderStatus.*;
 @NoArgsConstructor
 @Data
 public class CreateOrderRequest {
-    private Long memberId;
-    private List<CreateOrderDetailRequest> orderDetailList;
+//    private List<CreateOrderDetailRequest> orderDetailList;
 
-    public static Ordering toEntity(CreateOrderRequest createOrderResponse, Member member) {
+    private Long productId;
+    private Integer quantity;
+
+    public static Ordering toEntity(Member member) {
         return Ordering.builder()
                 .member(member)
 //                .orderStatus(ORDERED) // @Builder.Default로 대체

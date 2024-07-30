@@ -23,11 +23,15 @@ public class Member extends BaseEntity {
     private String email;
     private String password;
 
-    @Builder.Default
+//    @Builder.Default
     @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
 
+    @Builder.Default
     @Embedded
-    private Address address;
+    private Address address = new Address();
 
+    public void updateAddress(Address address) {
+        this.address = address;
+    }
 }

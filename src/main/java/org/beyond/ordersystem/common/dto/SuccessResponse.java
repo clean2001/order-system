@@ -9,14 +9,12 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public class SuccessResponse extends CustomResponse {
-    int statusCode;
     String statusMessage;
     Object result;
 
     @Builder
     public SuccessResponse(HttpStatus httpStatus, String statusMessage, Object result) {
         super(httpStatus.value());
-        this.statusCode = httpStatus.value();
         this.statusMessage = httpStatus.getReasonPhrase();
         this.result = result;
     }

@@ -32,7 +32,7 @@ public class JwtAuthFilter extends GenericFilter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 
-        try {
+//        try {
             String bearerToken = ((HttpServletRequest) request).getHeader("Authorization");
 
             if(bearerToken != null) {
@@ -65,12 +65,12 @@ public class JwtAuthFilter extends GenericFilter {
             // filter chain에서 그 다음 filtering으로 넘어가도록 하는 메서드이다.
             chain.doFilter(request, response);
 
-        } catch(Exception e) { // 검증하다 무슨 에러가 발생하든지 401 던져버리기
-            log.error(e.getMessage());
-            HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-            httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
-            httpServletResponse.setContentType("application/json");
-            httpServletResponse.getWriter().write("token not found");
-        }
+//        } catch(Exception e) { // 검증하다 무슨 에러가 발생하든지 401 던져버리기
+//            log.error(e.getMessage());
+//            HttpServletResponse httpServletResponse = (HttpServletResponse) response;
+//            httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
+//            httpServletResponse.setContentType("application/json");
+//            httpServletResponse.getWriter().write("token not found");
+//        }
     }
 }

@@ -35,4 +35,8 @@ public class Ordering {
     public void updateDetails(List<OrderDetail> orderDetails) {
         this.orderDetails = orderDetails ;
     }
+
+    public void updateStatus(OrderStatus orderStatus) {
+        this.orderStatus = orderStatus;
+    }
 }

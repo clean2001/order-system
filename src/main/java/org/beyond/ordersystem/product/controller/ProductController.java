@@ -10,7 +10,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
@@ -18,9 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductController {
     private final ProductService productService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/product/create")
-    public ResponseEntity<SuccessResponse> createProduct(CreateProductRequest createProductRequest) {
-        Long productId = productService.createProduct(createProductRequest);
+    public ResponseEntity<SuccessResponse> createProduct(@ModelAttribute CreateProductRequest createProductRequest) {
+        Long productId = productService.createAwsProduct(createProductRequest);
 
         SuccessResponse response = SuccessResponse.builder()
                 .httpStatus(HttpStatus.CREATED)
@@ -42,5 +45,9 @@ public class ProductController {
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+
+
+
 
 }

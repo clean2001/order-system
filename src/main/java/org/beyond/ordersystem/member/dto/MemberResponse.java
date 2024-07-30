@@ -1,6 +1,7 @@
 package org.beyond.ordersystem.member.dto;
 
 import lombok.*;
+import org.beyond.ordersystem.common.domain.Address;
 import org.beyond.ordersystem.member.domain.Member;
 
 @Data
@@ -17,6 +18,9 @@ public class MemberResponse {
     private String zipcode;
 
     public static MemberResponse fromEntity(Member member) {
+        if(member.getAddress() == null) {
+            member.updateAddress(new Address());
+        }
         return MemberResponse.builder()
                 .id(member.getId())
                 .name(member.getName())

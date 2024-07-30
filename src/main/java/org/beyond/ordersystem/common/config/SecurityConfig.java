@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .formLogin().disable()
                 .authorizeRequests()
                 // 아래 antMatchers는 인증 제외
-                    .antMatchers("/member/create", "/", "/doLogin")
+                    .antMatchers("/member/create", "/", "/doLogin", "/refresh-token")
                     .permitAll()
                 .anyRequest().authenticated().and()
                 // addFilterBefore: 사용자로부터 받아온 토큰이 정상인지 아닌지를 검증하는 코드.

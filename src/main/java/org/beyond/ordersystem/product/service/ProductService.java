@@ -43,6 +43,25 @@ public class ProductService {
         }
     }
 
+    public Long createAwsProduct(CreateProductRequest createProductRequest) {
+        MultipartFile image = createProductRequest.getProductImage();
+        try {
+
+            Product product = CreateProductRequest.toEntity(createProductRequest);
+            Product savedProduct = productRepository.save(product);
+
+
+            byte[] bytes = image.getBytes();
+            Path path = Paths.get("/Users/sejeong/Documents/temp", product.getId() + "_" + image.getOriginalFilename());
+            Files.write(path, bytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+
+            product.updateImagePath(path.toString()); // dirty checking
+            return savedProduct.getId();
+        } catch(IOException e) {
+            throw new RuntimeException("이미지 저장 실패");
+        }
+    }
+
     public Page<ProductResponse> productList(Pageable pageable) {
         Page<Product> productList = productRepository.findAll(pageable);
 

@@ -13,9 +13,9 @@ public class CreateOrderDetailRequest {
     private Long productId;
     private Integer quantity;
 
-    public static OrderDetail toEntity(CreateOrderDetailRequest createOrderDetailRequest, Product product, Ordering order) {
+    public static OrderDetail toEntity(CreateOrderRequest createOrderRequest, Product product, Ordering order) {
         return OrderDetail.builder()
-                .quantity(createOrderDetailRequest.getQuantity())
+                .quantity(createOrderRequest.getQuantity())
                 .ordering(order)
                 .product(product)
                 .build();

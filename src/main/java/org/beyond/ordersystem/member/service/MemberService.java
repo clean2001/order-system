@@ -1,6 +1,7 @@
 package org.beyond.ordersystem.member.service;
 
 import lombok.RequiredArgsConstructor;
+import org.beyond.ordersystem.common.auth.SecurityUtil;
 import org.beyond.ordersystem.member.domain.Member;
 import org.beyond.ordersystem.member.dto.CreateMemberRequest;
 import org.beyond.ordersystem.member.dto.CreateMemberResponse;
@@ -22,6 +23,7 @@ import java.util.Optional;
 public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SecurityUtil securityUtil;
 
     public Page<MemberResponse> memberList(Pageable pageable) {
         return memberRepository.findAll(pageable)
@@ -53,5 +55,13 @@ public class MemberService {
         }
 
         return member;
+    }
+
+    public MemberResponse getMyInfo() {
+        String email = securityUtil.getEmailFromSecurityContext();
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("없음"));
+
+        return MemberResponse.fromEntity(member);
     }
 }

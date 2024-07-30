@@ -2,9 +2,11 @@ package org.beyond.ordersystem.ordering.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.beyond.ordersystem.common.auth.SecurityUtil;
 import org.beyond.ordersystem.member.domain.Member;
 import org.beyond.ordersystem.member.repository.MemberRepository;
 import org.beyond.ordersystem.ordering.domain.OrderDetail;
+import org.beyond.ordersystem.ordering.domain.OrderStatus;
 import org.beyond.ordersystem.ordering.domain.Ordering;
 import org.beyond.ordersystem.ordering.dto.CreateOrderDetailRequest;
 import org.beyond.ordersystem.ordering.dto.CreateOrderDetailResponse;
@@ -17,6 +19,7 @@ import org.beyond.ordersystem.product.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +28,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.beyond.ordersystem.ordering.domain.OrderStatus.CANCELED;
 
 @Slf4j
 //@Transactional(propagation = Propagation.REQUIRES_NEW) // 전파레벨 새로운 트랜잭션 생성하도록 바꿈
@@ -36,17 +41,22 @@ public class OrderingService {
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
     private final OrderDetailRepository orderDetailRepository;
+    private final SecurityUtil securityUtil;
 
     private final EntityManager em; // em DI 받기
     // 방법 1. 쉬운 방식
     @Transactional
-    public CreateOrderResponse createOrder1(CreateOrderRequest dto) {
-        Member member = memberRepository.findById(dto.getMemberId()).orElseThrow(()->new EntityNotFoundException("없음"));
-        Ordering ordering = orderingRepository.save(CreateOrderRequest.toEntity(dto, member));
+    public CreateOrderResponse createOrder1(List<CreateOrderRequest> orderList) {
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        Member member = memberRepository.findByEmail(email).orElseThrow(()->new EntityNotFoundException("없음"));
+        Ordering ordering = orderingRepository.save(CreateOrderRequest.toEntity(member));
 
 //        OrderDetail생성 : order_id, product_id, quantity
-        for(CreateOrderDetailRequest orderDto : dto.getOrderDetailList()){
-            createOrderDetailItem(orderDto, ordering); // 따로 트랜잭션으로 저장하기
+        for(CreateOrderRequest orderDto : orderList){
+            createOrderDetailItem(orderDto, ordering);
         }
 
         em.clear(); // 강제 클리어 => 쿼리 나감
@@ -55,7 +65,7 @@ public class OrderingService {
     }
 
     @Transactional
-    public void createOrderDetailItem(CreateOrderDetailRequest orderDto, Ordering ordering) {
+    public void createOrderDetailItem(CreateOrderRequest orderDto, Ordering ordering) {
         Product product = productRepository.findById(orderDto.getProductId()).orElse(null);
         int quantity = orderDto.getQuantity();
         OrderDetail orderDetail =  OrderDetail.builder()
@@ -73,26 +83,23 @@ public class OrderingService {
 
     // 방법 2. JPA 최적화된 방식
     @Transactional
-    public CreateOrderResponse createOrder(CreateOrderRequest createOrderRequest) {
+    public CreateOrderResponse createOrder(List<CreateOrderRequest> createOrderRequest) {
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+        Member member = memberRepository.findByEmail(email).orElseThrow(()->new EntityNotFoundException("없음"));
+        Ordering ordering = orderingRepository.save(CreateOrderRequest.toEntity(member)); // 저장
 
-        // 주문한 회원
-        Member member = memberRepository.findByIdOrThrow(createOrderRequest.getMemberId());
-        Ordering ordering = CreateOrderRequest.toEntity(createOrderRequest, member);
-
-//        log.info("둘은 같은가? {}", savedOrder == ordering); // 같네
-
-        List<CreateOrderDetailRequest> orderDetailList = createOrderRequest.getOrderDetailList();;
-
-        for (CreateOrderDetailRequest createOrderDetailRequest : orderDetailList) {
-            Product product = productRepository.findByIdOrThrow(createOrderDetailRequest.getProductId());
+        for (CreateOrderRequest orderDto : createOrderRequest) {
+            Product product = productRepository.findByIdOrThrow(orderDto.getProductId());
 
             //== 재고 확인/감소 로직 ==//
             // 변경감지(=dirty checking)으로 인해 별도의 save 불필요
-            decreaseStock(product, createOrderDetailRequest.getQuantity());
+            decreaseStock(product, orderDto.getQuantity());
             //== 재고 확인/감소 로직 끝==//
 
-            OrderDetail orderDetail = CreateOrderDetailRequest.toEntity(createOrderDetailRequest, product, ordering);
-//            orderDetailRepository.save(orderDetail); // 이거 안해줘도 되네. cascade PERSIST 되나보다
+            OrderDetail orderDetail = CreateOrderDetailRequest.toEntity(orderDto, product, ordering);
+            orderDetailRepository.save(orderDetail); // 이거 안해줘도 되네. cascade PERSIST 되나보다 => 이제 이거 해줘야 Exception 안뜨네 왜지..
             ordering.getOrderDetails().add(orderDetail);
         }
 
@@ -114,5 +121,35 @@ public class OrderingService {
         }
 
         product.decreaseStockQuantity(count);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CreateOrderResponse> myOrderList(Pageable pageable) {
+        String email = securityUtil.getEmailFromSecurityContext();
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("없음"));
+
+        Page<Ordering> orderList = orderingRepository
+                .findAllByMember(pageable, member);
+
+        return orderList.map(CreateOrderResponse::fromEntity);
+
+    }
+
+    @Transactional
+    public Ordering cancelOrder(Long orderId) {
+//        String email = securityUtil.getEmailFromSecurityContext();
+//        Member member = memberRepository.findByEmail(email)
+//                .orElseThrow(() -> new EntityNotFoundException("없음"));
+
+        Ordering order = orderingRepository.findByIdOrThrow(orderId);
+
+//        if(!order.getMember().getId().equals(member.getId())) {
+//            throw new IllegalArgumentException("주문자만 취소 가능합니다.");
+//        }
+
+        order.updateStatus(CANCELED);
+
+        return order;
     }
 }
