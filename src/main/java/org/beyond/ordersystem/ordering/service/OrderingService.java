@@ -3,15 +3,13 @@ package org.beyond.ordersystem.ordering.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.beyond.ordersystem.common.auth.SecurityUtil;
+import org.beyond.ordersystem.common.service.StockInventoryService;
 import org.beyond.ordersystem.member.domain.Member;
 import org.beyond.ordersystem.member.repository.MemberRepository;
 import org.beyond.ordersystem.ordering.domain.OrderDetail;
 import org.beyond.ordersystem.ordering.domain.OrderStatus;
 import org.beyond.ordersystem.ordering.domain.Ordering;
-import org.beyond.ordersystem.ordering.dto.CreateOrderDetailRequest;
-import org.beyond.ordersystem.ordering.dto.CreateOrderDetailResponse;
-import org.beyond.ordersystem.ordering.dto.CreateOrderRequest;
-import org.beyond.ordersystem.ordering.dto.CreateOrderResponse;
+import org.beyond.ordersystem.ordering.dto.*;
 import org.beyond.ordersystem.ordering.repository.OrderDetailRepository;
 import org.beyond.ordersystem.ordering.repository.OrderingRepository;
 import org.beyond.ordersystem.product.domain.Product;
@@ -42,27 +40,10 @@ public class OrderingService {
     private final ProductRepository productRepository;
     private final OrderDetailRepository orderDetailRepository;
     private final SecurityUtil securityUtil;
-
+    private final StockInventoryService stockInventoryService;
     private final EntityManager em; // em DI 받기
-    // 방법 1. 쉬운 방식
-    @Transactional
-    public CreateOrderResponse createOrder1(List<CreateOrderRequest> orderList) {
-        String email = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
+    private final StockDecreaseEventHandler stockDecreaseEventHandler;
 
-        Member member = memberRepository.findByEmail(email).orElseThrow(()->new EntityNotFoundException("없음"));
-        Ordering ordering = orderingRepository.save(CreateOrderRequest.toEntity(member));
-
-//        OrderDetail생성 : order_id, product_id, quantity
-        for(CreateOrderRequest orderDto : orderList){
-            createOrderDetailItem(orderDto, ordering);
-        }
-
-        em.clear(); // 강제 클리어 => 쿼리 나감
-        Ordering findOrdering = orderingRepository.findByIdOrThrow(ordering.getId());
-        return CreateOrderResponse.fromEntity(findOrdering);
-    }
 
     @Transactional
     public void createOrderDetailItem(CreateOrderRequest orderDto, Ordering ordering) {
@@ -116,11 +97,28 @@ public class OrderingService {
     }
 
     private void decreaseStock(Product product, int count) {
-        if(product.getStockQuantity() < count) {
-            throw new IllegalArgumentException("재고가 부족합니다.");
-        }
+        //== 이 부분에서 redis를 통해서 재고 관리를 하겠다. ==//
+        // 상품명에 sale이라는 키워드가 붙어있는 경우에만 동시성 처리해보자
+        if(product.getName().contains("sale")) {
+            // 1. 이 부분에서 일단 재고를 감소시킴
+            int newQuantity = (int) stockInventoryService.decreaseStock(product.getId(), count);
 
-        product.decreaseStockQuantity(count);
+            // 2. 여기서 음수뜨면 예외 발생(하지만 레디스는 롤백되지 않음)
+            if(newQuantity < 0) {
+                throw new IllegalArgumentException("재고 부족");
+            }
+
+            // RDB에 재고를 업데이트
+            // 해결책: 이벤트 기반의 아키텍처 구상! => 이벤트 드리븐
+            // rabbitmq를 통해 비동기적으로 이벤트 처리
+            stockDecreaseEventHandler.publish(new StockDecreaseEvent(product.getId(), count));
+        } else {
+            if(product.getStockQuantity() < count) {
+                throw new IllegalArgumentException("재고가 부족합니다.");
+            }
+
+            product.decreaseStockQuantity(count);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -152,4 +150,29 @@ public class OrderingService {
 
         return order;
     }
+
+
+
+    //== 안쓰지만, 공부를 위해 남겨둔 코드들 ==//
+    // 방법 1. 쉬운 방식
+    @Transactional
+    public CreateOrderResponse createOrder1(List<CreateOrderRequest> orderList) {
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        Member member = memberRepository.findByEmail(email).orElseThrow(()->new EntityNotFoundException("없음"));
+        Ordering ordering = orderingRepository.save(CreateOrderRequest.toEntity(member));
+
+//        OrderDetail생성 : order_id, product_id, quantity
+        for(CreateOrderRequest orderDto : orderList){
+            createOrderDetailItem(orderDto, ordering);
+        }
+
+        em.clear(); // 강제 클리어 => 쿼리 나감
+        Ordering findOrdering = orderingRepository.findByIdOrThrow(ordering.getId());
+        return CreateOrderResponse.fromEntity(findOrdering);
+    }
+
+    //== ==//
 }

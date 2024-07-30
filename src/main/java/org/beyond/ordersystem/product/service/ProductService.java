@@ -1,6 +1,7 @@
 package org.beyond.ordersystem.product.service;
 
 import lombok.RequiredArgsConstructor;
+import org.beyond.ordersystem.common.service.StockInventoryService;
 import org.beyond.ordersystem.product.domain.Product;
 import org.beyond.ordersystem.product.dto.CreateProductRequest;
 import org.beyond.ordersystem.product.dto.ProductResponse;
@@ -29,11 +30,14 @@ import java.nio.file.StandardOpenOption;
 public class ProductService {
     private final ProductRepository productRepository;
     private final S3Client s3Client;
+    private final StockInventoryService stockInventoryService;
 
     //== static이 붙으면 Value 주입이 되지 않는다! ==//
     @Value("${cloud.aws.s3.bucket}")
     private String bucketName;
 
+    // synchronized를 설정한다 하더라도, 재고 감소가 DB에 반영되는 시점은 트랜잭션이 커밋되고 종료되는 시점이다.
+    //
     public Long createProduct(CreateProductRequest createProductRequest) {
         MultipartFile image = createProductRequest.getProductImage();
         try {
@@ -47,6 +51,12 @@ public class ProductService {
             Files.write(path, bytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 
             product.updateImagePath(path.toString()); // dirty checking
+
+            //== 동시성 ==//
+            if(createProductRequest.getName().contains("sale")) {
+                stockInventoryService.increaseStock(savedProduct.getId(), createProductRequest.getStockQuantity());
+            }
+
             return savedProduct.getId();
         } catch(IOException e) {
             throw new RuntimeException("이미지 저장 실패");
@@ -55,7 +65,7 @@ public class ProductService {
 
     public Long createAwsProduct(CreateProductRequest createProductRequest) {
         MultipartFile image = createProductRequest.getProductImage();
-//        String fileName = ;
+
         Product product = null;
 
         try {

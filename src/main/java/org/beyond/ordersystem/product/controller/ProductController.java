@@ -19,11 +19,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ProductController {
     private final ProductService productService;
-
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/product/create")
     public ResponseEntity<SuccessResponse> createProduct(@ModelAttribute CreateProductRequest createProductRequest) {
-        Long productId = productService.createAwsProduct(createProductRequest);
+        Long productId = productService.createProduct(createProductRequest);
 
         SuccessResponse response = SuccessResponse.builder()
                 .httpStatus(HttpStatus.CREATED)
