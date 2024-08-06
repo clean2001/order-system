@@ -19,10 +19,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.time.Duration;
@@ -109,8 +106,8 @@ public class MemberController {
                     .getBody();
         } catch(Exception e) {
             return new ResponseEntity<>(
-                    new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "invalid refresh token"),
-                    HttpStatus.UNAUTHORIZED);
+                    new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "invalid refresh token"),
+                    HttpStatus.BAD_REQUEST);
         }
 
         String email = claims.getSubject();
@@ -128,11 +125,19 @@ public class MemberController {
 
 
 
-        String newAccessToken = jwtTokenProvider.createRefreshToken(email, role);
+        String newAccessToken = jwtTokenProvider.createToken(email, role);
 
         Map<String, Object> info = new HashMap<>();
         info.put("accessToken", newAccessToken);
         SuccessResponse successResponse = new SuccessResponse(HttpStatus.OK, "access token is renewed", info);
+        return new ResponseEntity<>(successResponse, HttpStatus.OK);
+    }
+
+    @PatchMapping("/member/reset-password")
+    public ResponseEntity<?> updatePassword(@RequestBody UpdatePasswordRequest updatePasswordRequest) {
+        memberService.updatePassword(updatePasswordRequest);
+        SuccessResponse successResponse = new SuccessResponse(HttpStatus.OK, "비밀번호 변경", null);
+
         return new ResponseEntity<>(successResponse, HttpStatus.OK);
     }
 }

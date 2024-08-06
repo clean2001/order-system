@@ -22,7 +22,7 @@ public class CreateMemberRequest {
     private String name;
     @NotEmpty(message = "email is essential")
     private String email;
-    @NotEmpty(message = "password is essential")
+//    @NotEmpty(message = "password is essential")
     @Size(min = 8, message = "password minimum length is 8")
     private String password;
 //    private String city;

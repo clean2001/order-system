@@ -25,12 +25,15 @@ public class StockInventoryService {
     public long decreaseStock(Long itemId, int quantity) {
         // 아래 메서드의 리턴 값은 잔량(남은 재고)
         // 서드파티 작업할 때 형변환이 너무 번거롭다잉
-        int remains = Integer.parseInt(redisTemplate.opsForValue().get(String.valueOf(itemId)));
-        if(remains < quantity) {
-            return -1L;
-        } else {
-            return redisTemplate.opsForValue().decrement(String.valueOf(itemId), quantity);
-        }
+//        int remains = Integer.parseInt(redisTemplate.opsForValue().get(String.valueOf(itemId)));
+//        if(remains < quantity) {
+//            return -1L;
+//        } else {
+        return redisTemplate.opsForValue().decrement(String.valueOf(itemId), quantity);
+    }
+
+    public void setStockZero(Long itemId) {
+        redisTemplate.opsForValue().set(String.valueOf(itemId), "0");
     }
 
 

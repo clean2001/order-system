@@ -99,7 +99,6 @@ public class ProductService {
 
     public Page<ProductResponse> productList(Pageable pageable) {
         Page<Product> productList = productRepository.findAll(pageable);
-
         return productList
                 .map(ProductResponse::fromEntity);
     }

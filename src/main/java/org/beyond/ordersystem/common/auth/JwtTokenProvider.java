@@ -33,7 +33,7 @@ public class JwtTokenProvider {
         String token = Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + expiration * 60 * 1000L)) // 30분
+                .setExpiration(new Date(now.getTime() + expiration * 60 * 1000L))
                 .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
 
@@ -42,14 +42,16 @@ public class JwtTokenProvider {
 
     public String createRefreshToken(String email, String role) {
         // claims는 사용자 정보이자 페이로드 정보이다.
+        Date now = new Date();
+        Long two = now.getTime() + 14 * 24 * 60 * 60 * 1000L;
 
         Claims claims = Jwts.claims().setSubject(email);
         claims.put("role", role);
-        Date now = new Date();
+
         String token = Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + expiration * 60 * 1000L)) // 30분
+                .setExpiration(new Date(now.getTime() + expirationRt * 60 * 1000L))
                 .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
 

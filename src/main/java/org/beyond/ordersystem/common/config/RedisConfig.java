@@ -78,6 +78,7 @@ public class RedisConfig {
 //        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer()); // Json을 Serialize하기 위한 툴
         redisTemplate.setValueSerializer(new StringRedisSerializer());
         redisTemplate.setConnectionFactory(redisConnectionFactory);
+//        redisTemplate.setEnableTransactionSupport(true); // 트랜잭션
         return redisTemplate;
     }
 }

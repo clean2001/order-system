@@ -3,10 +3,7 @@ package org.beyond.ordersystem.member.service;
 import lombok.RequiredArgsConstructor;
 import org.beyond.ordersystem.common.auth.SecurityUtil;
 import org.beyond.ordersystem.member.domain.Member;
-import org.beyond.ordersystem.member.dto.CreateMemberRequest;
-import org.beyond.ordersystem.member.dto.CreateMemberResponse;
-import org.beyond.ordersystem.member.dto.MemberLoginDto;
-import org.beyond.ordersystem.member.dto.MemberResponse;
+import org.beyond.ordersystem.member.dto.*;
 import org.beyond.ordersystem.member.repository.MemberRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -63,5 +60,19 @@ public class MemberService {
                 .orElseThrow(() -> new EntityNotFoundException("없음"));
 
         return MemberResponse.fromEntity(member);
+    }
+
+//    @Transactional
+    public void updatePassword(UpdatePasswordRequest updatePasswordRequest) {
+        Member member = memberRepository.findByEmail(updatePasswordRequest.getEmail())
+                .orElseThrow(() -> new EntityNotFoundException("멤버 없음"));
+
+        if(!passwordEncoder.matches(updatePasswordRequest.getAsIsPassword(), member.getPassword())) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
+
+        String encodedPassword = passwordEncoder.encode(updatePasswordRequest.getToBePassword());
+        member.updatePassword(encodedPassword);
+//        memberRepository.save(member);
     }
 }

@@ -16,6 +16,7 @@ public class MemberResponse {
     private String city;
     private String street;
     private String zipcode;
+    private int orderCount;
 
     public static MemberResponse fromEntity(Member member) {
         if(member.getAddress() == null) {
@@ -28,6 +29,7 @@ public class MemberResponse {
                 .city(member.getAddress().getCity())
                 .street(member.getAddress().getStreet())
                 .zipcode(member.getAddress().getZipcode())
+                .orderCount(member.getOrderList().size())
                 .build();
     }
 }

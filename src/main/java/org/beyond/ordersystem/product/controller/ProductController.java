@@ -22,7 +22,7 @@ public class ProductController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/product/create")
     public ResponseEntity<SuccessResponse> createProduct(@ModelAttribute CreateProductRequest createProductRequest) {
-        Long productId = productService.createProduct(createProductRequest);
+        Long productId = productService.createAwsProduct(createProductRequest);
 
         SuccessResponse response = SuccessResponse.builder()
                 .httpStatus(HttpStatus.CREATED)

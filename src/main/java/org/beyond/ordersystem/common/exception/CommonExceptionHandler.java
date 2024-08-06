@@ -20,10 +20,11 @@ public class CommonExceptionHandler {
 
     }
 
+    // 여기가 @Valid 잡는 애
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> validHandler(MethodArgumentNotValidException e) {
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "arguments is not valid");
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getFieldError().getDefaultMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
 
     }
 

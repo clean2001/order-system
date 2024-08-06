@@ -96,15 +96,16 @@ public class OrderingService {
         return orderList.map(CreateOrderResponse::fromEntity);
     }
 
+    @Transactional
     private void decreaseStock(Product product, int count) {
         //== 이 부분에서 redis를 통해서 재고 관리를 하겠다. ==//
         // 상품명에 sale이라는 키워드가 붙어있는 경우에만 동시성 처리해보자
         if(product.getName().contains("sale")) {
-            // 1. 이 부분에서 일단 재고를 감소시킴
-            int newQuantity = (int) stockInventoryService.decreaseStock(product.getId(), count);
-
-            // 2. 여기서 음수뜨면 예외 발생(하지만 레디스는 롤백되지 않음)
-            if(newQuantity < 0) {
+            // 레디스가 음수로 내려갈 경우 추후 재고 update 상황에서 increase값이 정확하지 않을 수 있으므로,
+            // 음수면 0으로 setting 로직이 필요
+//            int newQuantity = ;
+            if((int) stockInventoryService.decreaseStock(product.getId(), count) < 0) {
+                stockInventoryService.setStockZero(product.getId()); // 여기서 자체적 롤백 처리
                 throw new IllegalArgumentException("재고 부족");
             }
 

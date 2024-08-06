@@ -4,8 +4,10 @@ package org.beyond.ordersystem.member.domain;
 import lombok.*;
 import org.beyond.ordersystem.common.domain.Address;
 import org.beyond.ordersystem.common.domain.BaseEntity;
+import org.beyond.ordersystem.ordering.domain.Ordering;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Builder
 @AllArgsConstructor
@@ -31,7 +33,14 @@ public class Member extends BaseEntity {
     @Embedded
     private Address address = new Address();
 
+    @OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
+    List<Ordering> orderList;
+
     public void updateAddress(Address address) {
         this.address = address;
+    }
+
+    public void updatePassword(String password) {
+        this.password = password;
     }
 }
