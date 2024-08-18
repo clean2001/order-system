@@ -6,6 +6,7 @@ import org.beyond.ordersystem.common.auth.SecurityUtil;
 import org.beyond.ordersystem.common.service.StockInventoryService;
 import org.beyond.ordersystem.member.domain.Member;
 import org.beyond.ordersystem.member.repository.MemberRepository;
+import org.beyond.ordersystem.ordering.controller.SseController;
 import org.beyond.ordersystem.ordering.domain.OrderDetail;
 import org.beyond.ordersystem.ordering.domain.OrderStatus;
 import org.beyond.ordersystem.ordering.domain.Ordering;
@@ -43,6 +44,7 @@ public class OrderingService {
     private final StockInventoryService stockInventoryService;
     private final EntityManager em; // em DI 받기
     private final StockDecreaseEventHandler stockDecreaseEventHandler;
+    private final SseController sseController;
 
 
     @Transactional
@@ -80,12 +82,13 @@ public class OrderingService {
             //== 재고 확인/감소 로직 끝==//
 
             OrderDetail orderDetail = CreateOrderDetailRequest.toEntity(orderDto, product, ordering);
-            orderDetailRepository.save(orderDetail); // 이거 안해줘도 되네. cascade PERSIST 되나보다 => 이제 이거 해줘야 Exception 안뜨네 왜지..
+            OrderDetail saved = orderDetailRepository.save(orderDetail);// 이거 안해줘도 되네. cascade PERSIST 되나보다 => 이제 이거 해줘야 Exception 안뜨네 왜지..
             ordering.getOrderDetails().add(orderDetail);
         }
 
         // 마지막에 저장~ => 이렇게 해야 디테일 아이디가 제대로 내려옴 => 이때 detail이 cascade persist가 되나봄
         Ordering savedOrder = orderingRepository.save(ordering);
+        sseController.publishMessage(CreateOrderResponse.fromEntity(savedOrder), "admin@test.com");
         // 위에서 저장하면 null로 내려오는 이유가. 쿼리가 안나가서 그럼. 아니 왜 쿼리가 안나가냐
         return CreateOrderResponse.fromEntity(savedOrder);
     }

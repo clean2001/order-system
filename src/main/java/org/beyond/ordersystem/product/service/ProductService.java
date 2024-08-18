@@ -1,14 +1,17 @@
 package org.beyond.ordersystem.product.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.beyond.ordersystem.common.service.StockInventoryService;
 import org.beyond.ordersystem.product.domain.Product;
 import org.beyond.ordersystem.product.dto.CreateProductRequest;
 import org.beyond.ordersystem.product.dto.ProductResponse;
+import org.beyond.ordersystem.product.dto.ProductSearchDto;
 import org.beyond.ordersystem.product.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,13 +20,20 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 
 
+@Slf4j
 @RequiredArgsConstructor
 @Transactional
 @Service
@@ -97,8 +107,36 @@ public class ProductService {
         }
     }
 
-    public Page<ProductResponse> productList(Pageable pageable) {
-        Page<Product> productList = productRepository.findAll(pageable);
+    public Page<ProductResponse> productList(ProductSearchDto searchDto, Pageable pageable) {
+        Specification<Product> specification = new Specification<Product>() {
+            @Override
+            public Predicate toPredicate(Root<Product> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> predicates = new ArrayList<>();
+                log.info("line 113: {}", searchDto);
+                // root: 엔티티의 속성을 접근하기 위한 객체이다.
+                // CriteriaBuilder: 쿼리를 생성하기 위한 객체이다.
+                // select * from product where name like '%searchDto.getSearchName()%';
+
+                if(searchDto != null && searchDto.getSearchName() != null) {
+                    predicates.add(criteriaBuilder.like(root.get("name"), "%"+ searchDto.getSearchName() + "%"));
+                }
+
+                if(searchDto != null && searchDto.getCategory() != null) {
+                    predicates.add(criteriaBuilder.like(root.get("category"), "%"+ searchDto.getCategory() + "%"));
+                }
+                // 화면 설계가 그렇게 안돼있기 때문에 & 조건이 걸릴 일은 없음
+
+                // 만약 아무것도 없이 들어오면 그냥 findAll 되는 것임
+                Predicate[] predicateArr = new Predicate[predicates.size()];
+                for(int i=0; i< predicateArr.length; i++) {
+                    predicateArr[i] = predicates.get(i);
+                }
+
+                Predicate predicate = criteriaBuilder.and(predicateArr);
+                return predicate;
+            }
+        };
+        Page<Product> productList = productRepository.findAll(specification, pageable);
         return productList
                 .map(ProductResponse::fromEntity);
     }
