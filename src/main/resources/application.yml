@@ -47,7 +47,7 @@ jwt:
 cloud:
   aws:
     credentials:
-      access-key: xxx
+      access-key: {{secrets.S3}}
       secret-key: yyy
     region:
       static: ap-northeast-2
