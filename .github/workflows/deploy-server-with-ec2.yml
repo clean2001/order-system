@@ -21,7 +21,7 @@ jobs:
         run: | # 명령어가 2줄 이상 되면 이렇게 써주기
           chmod 777 ./gradlew
           ./gradlew bootJar
-      - name: copy jar to ec2
+      - name: copy jar to ec2 inst1
         uses: appleboy/scp-action@master
         with:
           host: ec2-13-209-18-179.ap-northeast-2.compute.amazonaws.com
@@ -52,4 +52,36 @@ jobs:
             --spring.datasource.password=${{secrets.DB_PW}} \
             --cloud.aws.credentials.access-key=${{secrets.S3_KEY}} \
             --cloud.aws.credentials.secret-key=${{secrets.S3_SECRET}} > /home/ubuntu/app.log 2>&1 &
-            
+
+      - name: copy jar to ec2 inst2
+        uses: appleboy/scp-action@master
+        with:
+          host: ec2-13-209-18-179.ap-northeast-2.compute.amazonaws.com
+          username: ubuntu # ec2 연결로 들어가보면 계정명이 ubuntu이기 때문이다.
+          # pem 키를 통해 해당 인스턴스에 접근한다.
+          key: ${{secrets.EC2_PEMKEY}}
+          source: "./build/libs/*.jar" # 어떤 jar든지 간에 상관없음. 왜냐면 어차피 하나밖에 안만들어짐
+          target: "/home/ubuntu"
+      - name: install java and run jar on ec2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ec2-3-35-156-221.ap-northeast-2.compute.amazonaws.com
+          username: ubuntu # ec2 연결로 들어가보면 계정명이 ubuntu이기 때문이다.
+          # pem 키를 통해 해당 인스턴스에 접근한다.
+          key: ${{secrets.EC2_PEMKEY}}
+          # -y 옵션은 앞으로 yes 물어보지 말라는 뜻임
+          script: |
+            if ! type java > /dev/null/; then
+              sudo apt update && sudo apt-get install openjdk-11-jdk -y
+            else
+              echo "java is already installed"
+            fi
+            sudo killall java
+            nohup java -jar /home/ubuntu/build/libs/*.jar \
+            --spring.redis.host=${{secrets.REDIS_HOST}} \
+            --spring.datasource.url=jdbc:mariadb://${{secrets.DB_HOST}}:3306/ordersystem \
+            --spring.datasource.username=admin \
+            --spring.datasource.password=${{secrets.DB_PW}} \
+            --cloud.aws.credentials.access-key=${{secrets.S3_KEY}} \
+            --cloud.aws.credentials.secret-key=${{secrets.S3_SECRET}} > /home/ubuntu/app.log 2>&1 &
+            - name: copy jar to ec2 inst1
