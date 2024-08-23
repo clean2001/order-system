@@ -43,7 +43,7 @@ public class OrderingService {
     private final SecurityUtil securityUtil;
     private final StockInventoryService stockInventoryService;
     private final EntityManager em; // em DI 받기
-    private final StockDecreaseEventHandler stockDecreaseEventHandler;
+//    private final StockDecreaseEventHandler stockDecreaseEventHandler;
     private final SseController sseController;
 
 
@@ -115,7 +115,7 @@ public class OrderingService {
             // RDB에 재고를 업데이트
             // 해결책: 이벤트 기반의 아키텍처 구상! => 이벤트 드리븐
             // rabbitmq를 통해 비동기적으로 이벤트 처리
-            stockDecreaseEventHandler.publish(new StockDecreaseEvent(product.getId(), count));
+//            stockDecreaseEventHandler.publish(new StockDecreaseEvent(product.getId(), count));
         } else {
             if(product.getStockQuantity() < count) {
                 throw new IllegalArgumentException("재고가 부족합니다.");
