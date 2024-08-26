@@ -58,7 +58,7 @@ public class ProductService {
 
             byte[] bytes = image.getBytes();
 //            Path path = Paths.get("/Users/sejeong/Documents/temp", product.getId() + "_" + image.getOriginalFilename());
-            Path path = Paths.get("/tmp", product.getId() + "_" + image.getOriginalFilename()); //  배포를 위한 경로 변경
+            Path path = Paths.get("/tmp/", product.getId() + "_" + image.getOriginalFilename()); //  배포를 위한 경로 변경
             Files.write(path, bytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 
             product.updateImagePath(path.toString()); // dirty checking
