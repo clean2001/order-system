@@ -24,7 +24,7 @@ jobs:
       - name: copy jar to ec2 inst1
         uses: appleboy/scp-action@master
         with:
-          host: ec2-13-209-18-179.ap-northeast-2.compute.amazonaws.com
+          host: ec2-15-165-76-131.ap-northeast-2.compute.amazonaws.com
           username: ubuntu # ec2 연결로 들어가보면 계정명이 ubuntu이기 때문이다.
           # pem 키를 통해 해당 인스턴스에 접근한다.
           key: ${{secrets.EC2_PEMKEY}}
@@ -33,7 +33,7 @@ jobs:
       - name: install java and run jar on ec2
         uses: appleboy/ssh-action@master
         with:
-          host: ec2-13-209-18-179.ap-northeast-2.compute.amazonaws.com
+          host: ec2-15-165-76-131.ap-northeast-2.compute.amazonaws.com
           username: ubuntu # ec2 연결로 들어가보면 계정명이 ubuntu이기 때문이다.
           # pem 키를 통해 해당 인스턴스에 접근한다.
           key: ${{secrets.EC2_PEMKEY}}
@@ -56,7 +56,7 @@ jobs:
       - name: copy jar to ec2 inst2
         uses: appleboy/scp-action@master
         with:
-          host: ec2-3-35-156-221.ap-northeast-2.compute.amazonaws.com
+          host: ec2-43-201-250-103.ap-northeast-2.compute.amazonaws.com
           username: ubuntu # ec2 연결로 들어가보면 계정명이 ubuntu이기 때문이다.
           # pem 키를 통해 해당 인스턴스에 접근한다.
           key: ${{secrets.EC2_PEMKEY}}
@@ -65,7 +65,7 @@ jobs:
       - name: install java and run jar on ec2
         uses: appleboy/ssh-action@master
         with:
-          host: ec2-3-35-156-221.ap-northeast-2.compute.amazonaws.com
+          host: ec2-43-201-250-103.ap-northeast-2.compute.amazonaws.com
           username: ubuntu # ec2 연결로 들어가보면 계정명이 ubuntu이기 때문이다.
           # pem 키를 통해 해당 인스턴스에 접근한다.
           key: ${{secrets.EC2_PEMKEY}}
